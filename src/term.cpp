@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <termios.h>
 
-static Color default_color{0, 0};
+static Color default_color;
 
 char term::get_char(){
     return getchar();
@@ -36,8 +36,8 @@ void term::set_color(uint16_t c){
 void term::set_color(uint16_t fg, uint16_t bg){
     wprintf(L"\033[%u;%um", fg, bg);
 }
-void term::set_position(const Point& new_pos){
-    wprintf(L"\033[%d;%dH", new_pos.y + 1, new_pos.x + 1);
+void term::set_position(const Point& p){
+    wprintf(L"\033[%d;%dH", p.y + 1, p.x + 1);
 }
 
 void term::set_alt_buf(bool enable){
@@ -75,7 +75,7 @@ void term::set_locale(){
 }
 
 void term::reset_color(){
-    wprintf(L"\033[0m");
+    term::set_color(default_color);
 }
 void term::clear(){
     term::set_color(default_color);

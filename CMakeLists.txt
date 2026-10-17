@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 project(termplay)
 add_executable(termplay
-    main.cpp
-    term.cpp    term.h
+    src/main.cpp
+    src/term.cpp
+    src/types.cpp
+    src/render.cpp
 )
+target_include_directories(termplay PRIVATE src)
