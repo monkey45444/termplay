@@ -5,14 +5,14 @@
 namespace term{
     char get_char();
     Point get_size();
-    Color get_default_color();
+    RGB get_default_color();
 
     void write(wchar_t glyph);
     void write(const wchar_t* str);
 
-    void set_color(Color c);
-    void set_color(uint16_t c);
-    void set_color(uint16_t fg, uint16_t bg);
+    void set_fg_color(RGB c);
+    void set_bg_color(RGB c);
+    void set_color(RGB fg, RGB bg);
     void reset_color();
     void clear();
 

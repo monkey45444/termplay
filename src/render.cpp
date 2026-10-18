@@ -2,16 +2,9 @@
 
 #include "term.h"
 
-Render::Render():
-    cur_w_size(),
-    brush_color(),
-    brush_pos(),
-    color_vec(0),
-    change_vec(0){}
-Render::~Render(){}
-
 void Render::init(){
     term::set_playmode(true);
+    term::reset_color();
     update();
 }
 void Render::terminate(){
@@ -20,52 +13,77 @@ void Render::terminate(){
 void Render::update(){
     Point w_size = term::get_size();
     w_size.y *= 2;
-    if(cur_w_size != w_size){
-        cur_w_size = w_size;
+    if(window_size != w_size){
+        window_size = w_size;
 
-        unsigned long vec_size = w_size.x * w_size.y;
+        size_t vec_size = w_size.x * w_size.y;
         color_vec.resize(vec_size);
-        change_vec.assign(vec_size, true);
+        dirty_vec.assign(vec_size, true);
     }
 
-    term::set_position(Point(0, 0));
-    for(int y = 0; y < cur_w_size.y; y+=2)
-        for(int x = 0; x < cur_w_size.x; ++x){
-            bool b1 = get_change_from_vec({x, y});
-            bool b2 = get_change_from_vec({x, y + 1});
-            Color c1 = get_color_from_vec({x, y});
-            Color c2 = get_color_from_vec({x, y + 1});
+    reset_brush_pos();
+    for(Point p(0, 0); p.y < window_size.y; p.y+=2)
+        for(p.x = 0; p.x < window_size.x; p.x++){
+            uint8_t& d1 = get_dirty_at(p);
+            uint8_t& d2 = get_dirty_at(Point(p.x, p.y + 1));
+            if(!d1 && !d2)
+                continue;
+            d1 = false;
+            d2 = false;
+            RGB c1 = get_color_at(p);
+            RGB c2 = get_color_at(Point(p.x, p.y + 1));
             if(c1 == c2){
-                if(brush_color != c1)
-                    set_color(c1);
-                term::write(L'█');
+                if(tile_fg_color != c1){
+                    tile_fg_color = c1;
+                    term::set_fg_color(c1);
+                }
+                write_glyph(p, L'█');
             }
             else{
-                Color new_c(c1.fg, c2.bg);
-                if(brush_color != new_c)
-                    set_color(new_c);
-                term::write(L'▀');
+                if(tile_fg_color != c1){
+                    tile_fg_color = c1;
+                    term::set_fg_color(c1);
+                }
+                if(tile_bg_color != c2){
+                    tile_bg_color = c2;
+                    term::set_bg_color(c2);
+                }
+                write_glyph(p, L'▀');
             }
         }
 }
 
-Color& Render::get_color_from_vec(Point p){
-    return color_vec[p.x + p.y * cur_w_size.x];
+RGB& Render::get_color_at(Point p){
+    return color_vec[p.x + p.y * window_size.x];
 }
-uint8_t& Render::get_change_from_vec(Point p){
-    return change_vec[p.x + p.y * cur_w_size.x];
+uint8_t& Render::get_dirty_at(Point p){
+    return dirty_vec[p.x + p.y * window_size.x];
 }
-char Render::get_char(){
+void Render::write_glyph(Point p, wchar_t glyph){
+    if(brush_pos != p){
+        brush_pos = p;
+        term::set_position(Point(p.x, p.y / 2));
+    }
+    term::write(glyph);
+    brush_pos.x++;
+    if(brush_pos.x == window_size.x){
+        brush_pos.x = 0;
+        brush_pos.y+=2;
+    }
+}
+void Render::reset_brush_pos(){
+    brush_pos = Point(0, 0);
+    term::set_position(brush_pos);
+}
+char Render::get_char() const{
     return term::get_char();
 }
-void Render::set_color(Color c){
-    term::set_color(c);
+void Render::set_color(RGB c){
     brush_color = c;
 }
-void Render::write(int x, int y){
-    write({x, y});
-}
 void Render::write(Point p){
-    get_color_from_vec(p) = brush_color;
-    get_change_from_vec(p) = true;
+    if(p < window_size && p >= 0){
+        get_color_at(p) = brush_color;
+        get_dirty_at(p) = true;
+    }
 }

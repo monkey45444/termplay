@@ -5,25 +5,25 @@
 
 class Render{
 private:
-    Point cur_w_size;
+    Point window_size;
     Point brush_pos;
-    Color brush_color;
-    std::vector<Color> color_vec;
-    std::vector<uint8_t> change_vec;
+    RGB brush_color;
+    RGB tile_fg_color;
+    RGB tile_bg_color;
+    std::vector<RGB> color_vec;
+    std::vector<uint8_t> dirty_vec;
 
-    Color& get_color_from_vec(Point p);
-    uint8_t& get_change_from_vec(Point p);
+    RGB& get_color_at(Point p);
+    uint8_t& get_dirty_at(Point p);
+    void reset_brush_pos();
+    void write_glyph(Point p, wchar_t glyph);
 
 public:
-    Render();
-    ~Render();
-
     void init();
     void terminate();
     void update();
 
-    void set_color(Color c);
-    void write(int x, int y);
+    void set_color(RGB c);
     void write(Point p);
-    char get_char();
+    char get_char() const;
 };
