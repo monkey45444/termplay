@@ -28,5 +28,15 @@ int main(){
     print_rectangle(Point(5, 5), Point(10, 10));
     r.update();
     r.get_char();
+    r.set_color(RGB(0, 255, 0));
+    print_rectangle(Point(7, 7), Point(10, 10));
+    r.update();
+    r.get_char();
+    r.set_color(RGB(255, 0, 255));
+    print_rectangle(Point(9, 9), Point(10, 10));
+    r.set_color(RGB(255, 255, 0));
+    print_rectangle(Point(14, 14), Point(20, 10));
+    r.update();
+    r.get_char();
     r.terminate();
 }

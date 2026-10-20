@@ -7,8 +7,6 @@
 #include <unistd.h>
 #include <termios.h>
 
-static RGB default_color;
-
 char term::get_char(){
     return getchar();
 }
@@ -17,9 +15,6 @@ Point term::get_size(){
     if(ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1)
         return {};
     return Point{w.ws_col, w.ws_row};
-}
-RGB term::get_default_color(){
-    return default_color;
 }
 void term::write(wchar_t glyph){
     wprintf(L"%lc", glyph);
@@ -34,8 +29,7 @@ void term::set_bg_color(RGB c){
     wprintf(L"\033[48;2;%u;%u;%um", c.r, c.g, c.b);
 }
 void term::set_color(RGB fg, RGB bg){
-    wprintf(
-        L"\033[38;2;%u;%u;%u;48;2;%u;%u;%um",
+    wprintf( L"\033[38;2;%u;%u;%u;48;2;%u;%u;%um",
             fg.r, fg.g, fg.b,
             bg.r, bg.g, bg.b
     );
@@ -78,9 +72,6 @@ void term::set_locale(){
     std::setlocale(LC_ALL,"");
 }
 
-void term::reset_color(){
-    set_color(default_color, default_color);
-}
 void term::clear(){
     term::write(L"\033[2J");
 }

@@ -4,7 +4,7 @@
 
 void Render::init(){
     term::set_playmode(true);
-    term::reset_color();
+    term::set_color(default_color, default_color);
     update();
 }
 void Render::terminate(){
@@ -18,45 +18,54 @@ void Render::update(){
 
         size_t vec_size = w_size.x * w_size.y;
         color_vec.resize(vec_size);
-        dirty_vec.assign(vec_size, true);
+        dirty_vec.assign(vec_size, UpdateState::update);
     }
 
     reset_brush_pos();
     for(Point p(0, 0); p.y < window_size.y; p.y+=2)
-        for(p.x = 0; p.x < window_size.x; p.x++){
-            uint8_t& d1 = get_dirty_at(p);
-            uint8_t& d2 = get_dirty_at(Point(p.x, p.y + 1));
-            if(!d1 && !d2)
-                continue;
-            d1 = false;
-            d2 = false;
-            RGB c1 = get_color_at(p);
-            RGB c2 = get_color_at(Point(p.x, p.y + 1));
-            if(c1 == c2){
-                if(tile_fg_color != c1){
-                    tile_fg_color = c1;
-                    term::set_fg_color(c1);
-                }
-                write_glyph(p, L'█');
-            }
-            else{
-                if(tile_fg_color != c1){
-                    tile_fg_color = c1;
-                    term::set_fg_color(c1);
-                }
-                if(tile_bg_color != c2){
-                    tile_bg_color = c2;
-                    term::set_bg_color(c2);
-                }
-                write_glyph(p, L'▀');
-            }
+        for(p.x = 0; p.x < window_size.x; p.x++)
+            update_glyph(p);
+}
+void Render::update_glyph(Point p){
+    UpdateState& u1 = get_dirty_at(p);
+    UpdateState& u2 = get_dirty_at(Point(p.x, p.y + 1));
+    if(u1 == UpdateState::unchanged && u2 == UpdateState::unchanged)
+        return;
+
+    RGB& c1 = get_color_at(p);
+    RGB& c2 = get_color_at(Point(p.x, p.y + 1));
+    process_tile(c1, u1);
+    process_tile(c2, u2);
+
+    if(tile_fg_color != c1){
+        tile_fg_color = c1;
+        term::set_fg_color(c1);
+    }
+    if(c1 == c2){
+        write_glyph(p, L'█');
+    }
+    else{
+        if(tile_bg_color != c2){
+            tile_bg_color = c2;
+            term::set_bg_color(c2);
         }
+        write_glyph(p, L'▀');
+    }
+}
+void Render::process_tile(RGB& c, UpdateState& u){
+    if(u == UpdateState::erase){
+        c = default_color;
+        u = UpdateState::unchanged;
+    }
+    else{
+        u = UpdateState::erase;
+    }
 }
 
 RGB& Render::get_color_at(Point p){
     return color_vec[p.x + p.y * window_size.x];
 }
-uint8_t& Render::get_dirty_at(Point p){
+Render::UpdateState& Render::get_dirty_at(Point p){
     return dirty_vec[p.x + p.y * window_size.x];
 }
 void Render::write_glyph(Point p, wchar_t glyph){
@@ -84,6 +93,6 @@ void Render::set_color(RGB c){
 void Render::write(Point p){
     if(p < window_size && p >= 0){
         get_color_at(p) = brush_color;
-        get_dirty_at(p) = true;
+        get_dirty_at(p) = UpdateState::update;
     }
 }
